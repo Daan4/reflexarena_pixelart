@@ -4,6 +4,8 @@
 
 # The settings (in all caps) should be self explanatory.
 # You can copy the contents of the output file into your .map file.
+# Alternatively you can set APPEND to True and add the brushes directly into your .map file
+# Make sure to back up your .map file before using this functionality.
 
 # For questions or suggestions you can send a message to Daan#2052 on Discord.
 
@@ -14,7 +16,11 @@ import sys
 INPUT_FILE = 'C:\\example\\file.png'
 
 # output file path
-OUTPUT_FILE = 'C:\\example\\output.txt'
+OUTPUT_FILE = 'C:\\example\\output.map'
+
+# append to the output file instead of overwriting it
+# Make sure to back up your .map file before using this functionality.
+APPEND = False
 
 # size per pixel in units
 PIXEL_SIZE = 16
@@ -53,7 +59,11 @@ if __name__ == '__main__':
     x_min = sys.maxsize
     y_min = sys.maxsize
     z_min = sys.maxsize
-    with open(OUTPUT_FILE, 'w+') as f:
+    if APPEND:
+        open_mode = 'a+'
+    else:
+        open_mode = 'w+'
+    with open(OUTPUT_FILE, open_mode) as f:
         for y in range(0, height):
             for x in range(0, width):
                 blue = int(image[y, x, 0])
