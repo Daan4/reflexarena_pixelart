@@ -13,22 +13,22 @@ import cv2
 import sys
 
 # input file path
-INPUT_FILE = 'C:\\example\\file.png'
+INPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\test images\\sarge28.png'
 
 # output file path
-OUTPUT_FILE = 'C:\\example\\output.map'
+OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\output.txt'
 
 # append to the output file instead of overwriting it
 # Make sure to back up your .map file before using this functionality.
 APPEND = False
 
 # size per pixel in units
-PIXEL_SIZE = 16
+PIXEL_SIZE = 1
 
 # reflex material name
 MATERIAL = 'common/materials/effects/glow2'
 
-# x, y, z offset
+# x, y, z coordinates of the top left pixel
 ORIGIN = (0, 0, 0)
 
 # Add clip extending this many units from the image. Set to a negative number to not add clip.
@@ -38,8 +38,8 @@ CLIP_PADDING = 1
 # for example [(56, 62, 23), (255, 0, 0)]
 TRANSPARANT_COLORS = []
 
-# Flip the x and y axes.
-FLIP_XY = False
+# Rotate the image clockwise by this angle in degrees before converting it.
+ROTATE_ANGLE = 90
 
 # Flip the x and z axes
 FLIP_XZ = False
@@ -51,6 +51,10 @@ if __name__ == '__main__':
     image = cv2.imread(INPUT_FILE)
     height = image.shape[0]
     width = image.shape[1]
+    if ROTATE_ANGLE != 0:
+        M = cv2.getRotationMatrix2D((width/2, height/2), -ROTATE_ANGLE, 1)
+        image = cv2.warpAffine(image, M, (width, height))
+        
     ox, oy, oz = ORIGIN
     lines = []
     x_max = -sys.maxsize
@@ -82,8 +86,6 @@ if __name__ == '__main__':
                 bz_max = oz+PIXEL_SIZE
 
                 # perform any flips
-                if FLIP_XY:
-                    bx_min, by_min, bx_max, by_max = by_min, bx_min, by_max, bx_max
                 if FLIP_XZ:
                     bx_min, bz_min, bx_max, bz_max = bz_min, bx_min, bz_max, bx_max
                 if FLIP_YZ:
