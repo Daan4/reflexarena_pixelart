@@ -62,6 +62,20 @@ FLIP_XZ = False
 # Flip the y and z axes
 FLIP_YZ = False
 
+# Add an effect name here to use effects instead of brushes. Set to None to use brushes.
+# The effects use the same materials and colors that a brush would have
+EFFECT_NAME = None
+# Effect scale to use
+EFFECT_SCALE = 1/128
+# Distance between neighbouring effects in units on the X axis
+EFFECT_OFFSET_X = 1
+# Distance between neighbouring effects in units on the Y axis
+EFFECT_OFFSET_Y = 1
+# Effect angles same order as in game
+EFFECT_ANGLES = (0, 90, 0)
+# Number materials of the effect
+EFFECT_NUM_MATERIALS = 1
+
 if __name__ == '__main__':
     image = cv2.imread(INPUT_FILE, cv2.IMREAD_UNCHANGED)
     height = image.shape[0]
@@ -73,8 +87,12 @@ if __name__ == '__main__':
     if ROTATE_ANGLE != 0:
         M = cv2.getRotationMatrix2D((width/2, height/2), -ROTATE_ANGLE, 1)
         image = cv2.warpAffine(image, M, (width, height))
-        
     ox, oy, oz = ORIGIN
+    angle_x, angle_y, angle_z = EFFECT_ANGLES
+    if FLIP_XZ:
+        angle_x, angle_z = angle_z, angle_x
+    if FLIP_YZ:
+        angle_y, angle_z = angle_z, angle_y
     lines = []
     x_max = -sys.maxsize
     y_max = -sys.maxsize
@@ -100,13 +118,21 @@ if __name__ == '__main__':
                     # Skip pixels marked as transparant
                     continue
                 
-                # calculate brush vertex coordinates
-                bx_min = ox + x * PIXEL_SIZE
-                bx_max = ox + (x + 1) * PIXEL_SIZE
-                by_min = oy - (y + 1) * PIXEL_SIZE
-                by_max = oy - y * PIXEL_SIZE
-                bz_min = oz
-                bz_max = oz+PIXEL_SIZE
+                # calculate coordinates
+                if EFFECT_NAME is None:
+                    bx_min = ox + x * PIXEL_SIZE
+                    bx_max = ox + (x + 1) * PIXEL_SIZE
+                    by_min = oy - (y + 1) * PIXEL_SIZE
+                    by_max = oy - y * PIXEL_SIZE
+                    bz_min = oz
+                    bz_max = oz + PIXEL_SIZE
+                else:
+                    bx_min = ox + x * EFFECT_OFFSET_X
+                    bx_max = ox + x * EFFECT_OFFSET_X
+                    by_min = oy - y * EFFECT_OFFSET_Y
+                    by_max = oy - y * EFFECT_OFFSET_Y
+                    bz_min = oz
+                    bz_max = oz
 
                 # perform any flips
                 if FLIP_XZ:
@@ -128,10 +154,10 @@ if __name__ == '__main__':
                 if bz_min < z_min:
                     z_min = bz_min
                 
-                # set brush color
+                # set color
                 brush_color = hex(255*256**3+red*256**2+green*256+blue)
                 
-                # set brush material
+                # set material
                 brush_material = MATERIAL
                 for mat, rangelist in MATERIAL_OVERRIDES.items():
                     for _range in rangelist:
@@ -142,25 +168,36 @@ if __name__ == '__main__':
                     if brush_material != MATERIAL:
                         break
 
-                lines.append('    brush\n')
-                lines.append('        vertices\n')
-                lines.append(f'            {bx_min:.6f} {by_max:.6f} {bz_max:.6f}\n')
-                lines.append(f'            {bx_max:.6f} {by_max:.6f} {bz_max:.6f}\n')
-                lines.append(f'            {bx_max:.6f} {by_max:.6f} {bz_min:.6f}\n')
-                lines.append(f'            {bx_min:.6f} {by_max:.6f} {bz_min:.6f}\n')
-                lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_max:.6f}\n')
-                lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_max:.6f}\n')
-                lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_min:.6f}\n')
-                lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_min:.6f}\n')
-                lines.append('        faces\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {brush_color} {brush_material}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {brush_color} {brush_material}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {brush_color} {brush_material}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {brush_color} {brush_material}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {brush_color} {brush_material}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {brush_color} {brush_material}\n')
+                if EFFECT_NAME is None:
+                    lines.append('    brush\n')
+                    lines.append('        vertices\n')
+                    lines.append(f'            {bx_min:.6f} {by_max:.6f} {bz_max:.6f}\n')
+                    lines.append(f'            {bx_max:.6f} {by_max:.6f} {bz_max:.6f}\n')
+                    lines.append(f'            {bx_max:.6f} {by_max:.6f} {bz_min:.6f}\n')
+                    lines.append(f'            {bx_min:.6f} {by_max:.6f} {bz_min:.6f}\n')
+                    lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_max:.6f}\n')
+                    lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_max:.6f}\n')
+                    lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_min:.6f}\n')
+                    lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_min:.6f}\n')
+                    lines.append('        faces\n')
+                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {brush_color} {brush_material}\n')
+                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {brush_color} {brush_material}\n')
+                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {brush_color} {brush_material}\n')
+                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {brush_color} {brush_material}\n')
+                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {brush_color} {brush_material}\n')
+                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {brush_color} {brush_material}\n')
+                else:
+                    lines.append('    entity\n')
+                    lines.append('        type Effect\n')
+                    lines.append(f'        Vector3 position {bx_min:.6f} {by_min:.6f} {bz_min:.6f}\n')
+                    lines.append(f'        Vector3 angles {angle_x:.6f} {angle_y:.6f} {angle_z:.6f}\n')
+                    lines.append(f'        String64 effectName {EFFECT_NAME}\n')
+                    for i in range(EFFECT_NUM_MATERIALS):
+                        lines.append(f'        String256 material{i}Name {brush_material}\n')
+                        lines.append(f'        ColourARGB32 material{i}Albedo {brush_color}\n')
+                    lines.append(f'        Float effectScale {EFFECT_SCALE}\n')
 
-        # Add clip brush around all pixel brushes.
+        # Add clip brush around all pixel brushes/effects.
         if CLIP_PADDING >= 0:
             x_min -= CLIP_PADDING
             x_max += CLIP_PADDING
@@ -168,6 +205,9 @@ if __name__ == '__main__':
             y_max += CLIP_PADDING
             z_min -= CLIP_PADDING
             z_max += CLIP_PADDING
+            if EFFECT_NAME is not None:
+                x_min += EFFECT_OFFSET_X
+                y_min -= EFFECT_OFFSET_Y
 
             lines.append('    brush\n')
             lines.append('        vertices\n')
