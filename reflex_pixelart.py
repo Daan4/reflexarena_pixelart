@@ -27,9 +27,10 @@ PREFAB_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pix
 # (Between the version and the global worldspawn entity)
 USE_PREFABS = True
 
-# append to the worldspawn output file instead of overwriting it
+# append both worldspawn and prefabs to the worldspawn output file instead of overwriting it.
 # Make sure to back up your .map file before using this functionality.
-# This only works for worldspawn, prefabs will have to be manually copied.
+# Prefab output will be inserted from the 2nd line of the .map file.
+# Worldspawn output will be appended to the bottom of the .map file.
 APPEND = False
 
 # size per pixel in units
@@ -141,6 +142,7 @@ def rgb2hex(r, g, b):
 if __name__ == '__main__':
     ox, oy, oz = ORIGIN
     worldspawn_lines = []
+    effect_lines = []
     prefab_lines = []
     x_max = -sys.maxsize
     y_max = -sys.maxsize
@@ -172,7 +174,7 @@ if __name__ == '__main__':
         tmp = tmp.reshape(height*width, 3)
         unique, counts = np.unique(tmp, return_counts=True, axis=0)
         unique_indices = np.where(counts > 1)
-        prefabs = {rgb2hex(x[0], x[1], x[2]): None for x in unique[unique_indices]}
+        prefabs = {rgb2hex(x[2], x[1], x[0]): None for x in unique[unique_indices]}
     # Apply flips to effect angles
     angle_x, angle_y, angle_z = EFFECT_ANGLES
     if FLIP_XZ:
@@ -228,10 +230,10 @@ if __name__ == '__main__':
                 z_max = bz_max
             if bz_min < z_min:
                 z_min = bz_min
-            
+
             # set color
             color = rgb2hex(red, green, blue)
-            
+
             # set material
             material = MATERIAL
             for mat, rangelist in MATERIAL_OVERRIDES.items():
@@ -259,9 +261,12 @@ if __name__ == '__main__':
                             prefab_lines.append(
                                 generate_effect_string(ox, oy, oz, angle_x, angle_y, angle_z, EFFECT_NAME,
                                                        material, color, EFFECT_SCALE, EFFECT_NUM_MATERIALS))
-                        worldspawn_lines.append(generate_prefab_string(bx_min, by_min, bz_min, prefabs[color]))
+                    if EFFECT_NAME is None:
+                        effect_lines.append(
+                            generate_prefab_string(bx_min, by_min + PIXEL_SIZE, bz_min, prefabs[color]))
                     else:
-                        worldspawn_lines.append(generate_prefab_string(bx_min, by_min, bz_min, prefabs[color]))
+                        effect_lines.append(
+                            generate_prefab_string(bx_min, by_min, bz_min, prefabs[color]))
                     add_pixel = False
                 except KeyError:
                     pass
@@ -269,8 +274,8 @@ if __name__ == '__main__':
                 if EFFECT_NAME is None:
                     worldspawn_lines.append(generate_brush_string(bx_min, bx_max, by_min, by_max, bz_min, bz_max, color, material))
                 else:
-                    worldspawn_lines.append(generate_effect_string(bx_min, by_min, bz_min, angle_x, angle_y, angle_z, EFFECT_NAME,
-                                                        material, color, EFFECT_SCALE, EFFECT_NUM_MATERIALS))
+                    effect_lines.append(generate_effect_string(bx_min, by_min, bz_min, angle_x, angle_y, angle_z, EFFECT_NAME,
+                                                               material, color, EFFECT_SCALE, EFFECT_NUM_MATERIALS))
 
     # Add clip brush around all pixel brushes/effects.
     if CLIP_PADDING >= 0:
@@ -284,13 +289,14 @@ if __name__ == '__main__':
             x_min += EFFECT_OFFSET_X
             y_min -= EFFECT_OFFSET_Y
         worldspawn_lines.append(generate_brush_string(x_min, x_max, y_min, y_max, z_min, z_max, '0x00000000', CLIP_MATERIAL))
-    
+
+    # Write to files
     if APPEND:
         open_mode = 'a+'
     else:
         open_mode = 'w+'
     with open(WORLDSPAWN_OUTPUT_FILE, open_mode) as f:
-        f.writelines(worldspawn_lines)
+        f.writelines(worldspawn_lines + effect_lines)
     if USE_PREFABS:
         with open(PREFAB_OUTPUT_FILE, 'w+') as f:
             f.writelines(prefab_lines)
