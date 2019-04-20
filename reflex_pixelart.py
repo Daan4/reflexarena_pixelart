@@ -39,7 +39,7 @@ CLIP_PADDING = 1
 TRANSPARANT_COLORS = []
 
 # Rotate the image clockwise by this angle in degrees before converting it.
-ROTATE_ANGLE = 90
+ROTATE_ANGLE = 0
 
 # Flip the x and z axes
 FLIP_XZ = False
@@ -87,9 +87,9 @@ if __name__ == '__main__':
 
                 # perform any flips
                 if FLIP_XZ:
-                    bx_min, bz_min, bx_max, bz_max = bz_min, bx_min, bz_max, bx_max
+                    bx_min, bz_min, bx_max, bz_max, ox, oz = bz_min, bx_min, bz_max, bx_max, oz, ox
                 if FLIP_YZ:
-                    by_min, bz_min, by_max, bz_max = bz_min, by_min, bz_max, by_max
+                    by_min, bz_min, by_max, bz_max, oy, oz = bz_min, by_min, bz_max, by_max, oz, oy
                 
                 # track bounding coordinates for drawn brushes to draw a clip later
                 if bx_max > x_max:
