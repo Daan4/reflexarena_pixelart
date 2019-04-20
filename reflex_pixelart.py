@@ -38,6 +38,9 @@ CLIP_PADDING = 1
 # for example [(56, 62, 23), (255, 0, 0)]
 TRANSPARANT_COLORS = []
 
+# If the image has an alpha channel, pixels with an alpha value below this value will be ignored.
+ALPHA_THRESHOLD = 0
+
 # Rotate the image clockwise by this angle in degrees before converting it.
 ROTATE_ANGLE = 0
 
@@ -48,9 +51,13 @@ FLIP_XZ = False
 FLIP_YZ = False
 
 if __name__ == '__main__':
-    image = cv2.imread(INPUT_FILE)
+    image = cv2.imread(INPUT_FILE, cv2.IMREAD_UNCHANGED)
     height = image.shape[0]
     width = image.shape[1]
+    if image.shape[2] == 4:
+        has_alpha = True
+    else:
+        has_alpha = False
     if ROTATE_ANGLE != 0:
         M = cv2.getRotationMatrix2D((width/2, height/2), -ROTATE_ANGLE, 1)
         image = cv2.warpAffine(image, M, (width, height))
@@ -73,7 +80,11 @@ if __name__ == '__main__':
                 blue = int(image[y, x, 0])
                 green = int(image[y, x, 1])
                 red = int(image[y, x, 2])
-                if (red, green, blue) in TRANSPARANT_COLORS:
+                if has_alpha:
+                    alpha = int(image[y, x, 3])
+                else:
+                    alpha = 255
+                if (red, green, blue) in TRANSPARANT_COLORS or alpha < ALPHA_THRESHOLD:
                     # Skip pixel colors marked as transparant
                     continue
                 
