@@ -27,9 +27,10 @@ PREFAB_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pix
 # (Between the version and the global worldspawn entity)
 USE_PREFABS = True
 
-# append to the worldspawn output file instead of overwriting it
+# append both worldspawn and prefabs to the worldspawn output file instead of overwriting it.
 # Make sure to back up your .map file before using this functionality.
-# This only works for worldspawn, prefabs will have to be manually copied.
+# Prefab output will be appended from the 2nd line of the .map file.
+# Worldspawn output will be appended to the bottom of the .map file.
 APPEND = False
 
 # size per pixel in units
@@ -172,7 +173,7 @@ if __name__ == '__main__':
         tmp = tmp.reshape(height*width, 3)
         unique, counts = np.unique(tmp, return_counts=True, axis=0)
         unique_indices = np.where(counts > 1)
-        prefabs = {rgb2hex(x[0], x[1], x[2]): None for x in unique[unique_indices]}
+        prefabs = {rgb2hex(x[2], x[1], x[0]): None for x in unique[unique_indices]}
     # Apply flips to effect angles
     angle_x, angle_y, angle_z = EFFECT_ANGLES
     if FLIP_XZ:
@@ -231,7 +232,6 @@ if __name__ == '__main__':
             
             # set color
             color = rgb2hex(red, green, blue)
-            
             # set material
             material = MATERIAL
             for mat, rangelist in MATERIAL_OVERRIDES.items():
@@ -259,9 +259,7 @@ if __name__ == '__main__':
                             prefab_lines.append(
                                 generate_effect_string(ox, oy, oz, angle_x, angle_y, angle_z, EFFECT_NAME,
                                                        material, color, EFFECT_SCALE, EFFECT_NUM_MATERIALS))
-                        worldspawn_lines.append(generate_prefab_string(bx_min, by_min, bz_min, prefabs[color]))
-                    else:
-                        worldspawn_lines.append(generate_prefab_string(bx_min, by_min, bz_min, prefabs[color]))
+                    worldspawn_lines.append(generate_prefab_string(bx_min, by_min, bz_min, prefabs[color]))
                     add_pixel = False
                 except KeyError:
                     pass
