@@ -103,6 +103,8 @@ if __name__ == '__main__':
                 if bz_min < z_min:
                     z_min = bz_min
 
+                color_string = hex(255*256**3+red*256**2+green*256+blue)
+
                 lines.append('    brush\n')
                 lines.append('        vertices\n')
                 lines.append(f'            {bx_min:.6f} {by_max:.6f} {bz_max:.6f}\n')
@@ -114,12 +116,12 @@ if __name__ == '__main__':
                 lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_min:.6f}\n')
                 lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_min:.6f}\n')
                 lines.append('        faces\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {hex(255*256**3+red*256**2+green*256+blue)} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {hex(255*256**3+red*256**2+green*256+blue)} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {hex(255*256**3+red*256**2+green*256+blue)} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {hex(255*256**3+red*256**2+green*256+blue)} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {hex(255*256**3+red*256**2+green*256+blue)} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {hex(255*256**3+red*256**2+green*256+blue)} {MATERIAL}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {color_string} {MATERIAL}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {color_string} {MATERIAL}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {color_string} {MATERIAL}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {color_string} {MATERIAL}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {color_string} {MATERIAL}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {color_string} {MATERIAL}\n')
 
         # Add clip brush around all pixel brushes.
         if CLIP_PADDING >= 0:
