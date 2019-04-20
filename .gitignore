@@ -1,5 +1,4 @@
 /venv/
 /.idea/
 /test images/
-output.txt
-todo
+*.txt
