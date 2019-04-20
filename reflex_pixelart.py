@@ -17,7 +17,7 @@ import sys
 INPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\test images\\rocket gang.png'
 
 # worldspawn output file path
-WORLDSPAWN_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\brushes.txt'
+WORLDSPAWN_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\empty.map'
 # prefab output file path
 PREFAB_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\prefabs.txt'
 
@@ -292,11 +292,17 @@ if __name__ == '__main__':
 
     # Write to files
     if APPEND:
-        open_mode = 'a+'
+        with open(WORLDSPAWN_OUTPUT_FILE, 'a+') as f:
+            f.write('\n')
+            f.writelines(worldspawn_lines + effect_lines)
+            f.seek(0)
+            lines = f.readlines()[1:]  # Cut off the first line which has the version number
+        with open(WORLDSPAWN_OUTPUT_FILE, 'w+') as f:
+            f.write('reflex map version 8\n')
+            f.writelines(prefab_lines)
+            f.writelines(lines)
     else:
-        open_mode = 'w+'
-    with open(WORLDSPAWN_OUTPUT_FILE, open_mode) as f:
-        f.writelines(worldspawn_lines + effect_lines)
-    if USE_PREFABS:
+        with open(WORLDSPAWN_OUTPUT_FILE, 'w+') as f:
+            f.writelines(worldspawn_lines + effect_lines)
         with open(PREFAB_OUTPUT_FILE, 'w+') as f:
             f.writelines(prefab_lines)
