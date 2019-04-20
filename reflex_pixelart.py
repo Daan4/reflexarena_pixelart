@@ -66,8 +66,9 @@ FLIP_XZ = False
 FLIP_YZ = False
 
 # Add an effect name here to use effects instead of brushes. Set to None to use brushes.
-# The effects use the same materials and colors that a brush would have
-EFFECT_NAME = None
+# The effects use the same materials and colors that a brush would have.
+# Using an effect instead of brushes can reduce the file size and increase performance.
+EFFECT_NAME = 'common/meshes/concrete/concrete_tile_128x128'
 # Effect scale to use
 EFFECT_SCALE = 1/128
 # Distance between neighbouring effects in units on the X axis
@@ -78,6 +79,41 @@ EFFECT_OFFSET_Y = 1
 EFFECT_ANGLES = (0, 90, 0)
 # Number of materials the effect has
 EFFECT_NUM_MATERIALS = 1
+
+
+def generate_brush_string(xmin, xmax, ymin, ymax, zmin, zmax, color, material):
+    brush = '    brush\n'
+    brush += '        vertices\n'
+    brush += f'            {xmin:.6f} {ymax:.6f} {zmax:.6f}\n'
+    brush += f'            {xmax:.6f} {ymax:.6f} {zmax:.6f}\n'
+    brush += f'            {xmax:.6f} {ymax:.6f} {zmin:.6f}\n'
+    brush += f'            {xmin:.6f} {ymax:.6f} {zmin:.6f}\n'
+    brush += f'            {xmin:.6f} {ymin:.6f} {zmax:.6f}\n'
+    brush += f'            {xmax:.6f} {ymin:.6f} {zmax:.6f}\n'
+    brush += f'            {xmax:.6f} {ymin:.6f} {zmin:.6f}\n'
+    brush += f'            {xmin:.6f} {ymin:.6f} {zmin:.6f}\n'
+    brush += '        faces\n'
+    brush += f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {color} {material}\n'
+    brush += f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {color} {material}\n'
+    brush += f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {color} {material}\n'
+    brush += f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {color} {material}\n'
+    brush += f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {color} {material}\n'
+    brush += f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {color} {material}\n'
+    return brush
+
+
+def generate_effect_string(x, y, z, ax, ay, az, name, material, color, scale, num_materials):
+    effect = '    entity\n'
+    effect += '        type Effect\n'
+    effect += f'        Vector3 position {x:.6f} {y:.6f} {z:.6f}\n'
+    effect += f'        Vector3 angles {ax:.6f} {ay:.6f} {az:.6f}\n'
+    effect += f'        String64 effectName {name}\n'
+    for i in range(num_materials):
+        effect += f'        String256 material{i}Name {material}\n'
+        effect += f'        ColourARGB32 material{i}Albedo {color}\n'
+    effect += f'        Float effectScale {scale}\n'
+    return effect
+
 
 if __name__ == '__main__':
     ox, oy, oz = ORIGIN
@@ -168,47 +204,24 @@ if __name__ == '__main__':
                     z_min = bz_min
                 
                 # set color
-                brush_color = hex(255*256**3+red*256**2+green*256+blue)
+                color = hex(255*256**3+red*256**2+green*256+blue)                          
                 
                 # set material
-                brush_material = MATERIAL
+                material = MATERIAL
                 for mat, rangelist in MATERIAL_OVERRIDES.items():
                     for _range in rangelist:
                         if red >= _range[0] and green >= _range[1] and blue >= _range[2] and\
                                 red <= _range[3] and green <= _range[4] and blue <= _range[5]:
-                            brush_material = mat
+                            material = mat
                             break
-                    if brush_material != MATERIAL:
+                    if material != MATERIAL:
                         break
 
                 if EFFECT_NAME is None:
-                    lines.append('    brush\n')
-                    lines.append('        vertices\n')
-                    lines.append(f'            {bx_min:.6f} {by_max:.6f} {bz_max:.6f}\n')
-                    lines.append(f'            {bx_max:.6f} {by_max:.6f} {bz_max:.6f}\n')
-                    lines.append(f'            {bx_max:.6f} {by_max:.6f} {bz_min:.6f}\n')
-                    lines.append(f'            {bx_min:.6f} {by_max:.6f} {bz_min:.6f}\n')
-                    lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_max:.6f}\n')
-                    lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_max:.6f}\n')
-                    lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_min:.6f}\n')
-                    lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_min:.6f}\n')
-                    lines.append('        faces\n')
-                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {brush_color} {brush_material}\n')
-                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {brush_color} {brush_material}\n')
-                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {brush_color} {brush_material}\n')
-                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {brush_color} {brush_material}\n')
-                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {brush_color} {brush_material}\n')
-                    lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {brush_color} {brush_material}\n')
+                    lines.append(generate_brush_string(bx_min, bx_max, by_min, by_max, bz_min, bz_max, color, material))
                 else:
-                    lines.append('    entity\n')
-                    lines.append('        type Effect\n')
-                    lines.append(f'        Vector3 position {bx_min:.6f} {by_min:.6f} {bz_min:.6f}\n')
-                    lines.append(f'        Vector3 angles {angle_x:.6f} {angle_y:.6f} {angle_z:.6f}\n')
-                    lines.append(f'        String64 effectName {EFFECT_NAME}\n')
-                    for i in range(EFFECT_NUM_MATERIALS):
-                        lines.append(f'        String256 material{i}Name {brush_material}\n')
-                        lines.append(f'        ColourARGB32 material{i}Albedo {brush_color}\n')
-                    lines.append(f'        Float effectScale {EFFECT_SCALE}\n')
+                    lines.append(generate_effect_string(bx_min, by_min, bz_min, angle_x, angle_y, angle_z, EFFECT_NAME,
+                                                        material, color, EFFECT_SCALE, EFFECT_NUM_MATERIALS))
 
         # Add clip brush around all pixel brushes/effects.
         if CLIP_PADDING >= 0:
@@ -221,23 +234,6 @@ if __name__ == '__main__':
             if EFFECT_NAME is not None:
                 x_min += EFFECT_OFFSET_X
                 y_min -= EFFECT_OFFSET_Y
-
-            lines.append('    brush\n')
-            lines.append('        vertices\n')
-            lines.append(f'            {x_min:.6f} {y_max:.6f} {z_max:.6f}\n')
-            lines.append(f'            {x_max:.6f} {y_max:.6f} {z_max:.6f}\n')
-            lines.append(f'            {x_max:.6f} {y_max:.6f} {z_min:.6f}\n')
-            lines.append(f'            {x_min:.6f} {y_max:.6f} {z_min:.6f}\n')
-            lines.append(f'            {x_min:.6f} {y_min:.6f} {z_max:.6f}\n')
-            lines.append(f'            {x_max:.6f} {y_min:.6f} {z_max:.6f}\n')
-            lines.append(f'            {x_max:.6f} {y_min:.6f} {z_min:.6f}\n')
-            lines.append(f'            {x_min:.6f} {y_min:.6f} {z_min:.6f}\n')
-            lines.append('        faces\n')
-            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 0x00000000 {CLIP_MATERIAL}\n')
-            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 0x00000000 {CLIP_MATERIAL}\n')
-            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 0x00000000 {CLIP_MATERIAL}\n')
-            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 0x00000000 {CLIP_MATERIAL}\n')
-            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 0x00000000 {CLIP_MATERIAL}\n')
-            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 0x00000000 {CLIP_MATERIAL}\n')
+            lines.append(generate_brush_string(x_min, x_max, y_min, y_max, z_min, z_max, '0x00000000', CLIP_MATERIAL))
 
         f.writelines(lines)
