@@ -28,11 +28,23 @@ PIXEL_SIZE = 1
 # reflex material name
 MATERIAL = 'common/materials/effects/glow2'
 
+# The dictionary key is a material name and the value is a list of (inclusive) rgb range tuples.
+# Any pixel within a given range will have its material changed to the one given here.
+# If a pixel fits in multiple ranges then the first material encountered will be used.
+# Example: {'common/liquids/lava/lava': [(0, 0, 0, 50, 50, 50), (100, 100, 100, 150, 150, 150)],
+#           'common/liquids/water/water': [...]}
+# Range tuple format: [(r_low, g_low, b_low, r_high, g_high, b_high)]
+# The example will change all pixels with rgb values between 0-50 or 100-150 to lava.
+MATERIAL_OVERRIDES = {}
+
 # x, y, z coordinates of the top left pixel
 ORIGIN = (0, 0, 0)
 
 # Add clip extending this many units from the image. Set to a negative number to not add clip.
 CLIP_PADDING = 1
+
+# Material that´s used as a clip
+CLIP_MATERIAL = 'internal/editor/textures/editor_fullclip'
 
 # List of transparent colors given as (r,g,b) tuples. Pixels with these colors are not converted to brushes.
 # for example [(56, 62, 23), (255, 0, 0)]
@@ -85,7 +97,7 @@ if __name__ == '__main__':
                 else:
                     alpha = 255
                 if (red, green, blue) in TRANSPARANT_COLORS or alpha < ALPHA_THRESHOLD:
-                    # Skip pixel colors marked as transparant
+                    # Skip pixels marked as transparant
                     continue
                 
                 # calculate brush vertex coordinates
@@ -115,8 +127,20 @@ if __name__ == '__main__':
                     z_max = bz_max
                 if bz_min < z_min:
                     z_min = bz_min
-
-                color_string = hex(255*256**3+red*256**2+green*256+blue)
+                
+                # set brush color
+                brush_color = hex(255*256**3+red*256**2+green*256+blue)
+                
+                # set brush material
+                brush_material = MATERIAL
+                for mat, rangelist in MATERIAL_OVERRIDES.items():
+                    for _range in rangelist:
+                        if red >= _range[0] and green >= _range[1] and blue >= _range[2] and\
+                                red <= _range[3] and green <= _range[4] and blue <= _range[5]:
+                            brush_material = mat
+                            break
+                    if brush_material != MATERIAL:
+                        break
 
                 lines.append('    brush\n')
                 lines.append('        vertices\n')
@@ -129,12 +153,12 @@ if __name__ == '__main__':
                 lines.append(f'            {bx_max:.6f} {by_min:.6f} {bz_min:.6f}\n')
                 lines.append(f'            {bx_min:.6f} {by_min:.6f} {bz_min:.6f}\n')
                 lines.append('        faces\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {color_string} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {color_string} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {color_string} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {color_string} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {color_string} {MATERIAL}\n')
-                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {color_string} {MATERIAL}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 {brush_color} {brush_material}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 {brush_color} {brush_material}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 {brush_color} {brush_material}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 {brush_color} {brush_material}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 {brush_color} {brush_material}\n')
+                lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 {brush_color} {brush_material}\n')
 
         # Add clip brush around all pixel brushes.
         if CLIP_PADDING >= 0:
@@ -156,11 +180,11 @@ if __name__ == '__main__':
             lines.append(f'            {x_max:.6f} {y_min:.6f} {z_min:.6f}\n')
             lines.append(f'            {x_min:.6f} {y_min:.6f} {z_min:.6f}\n')
             lines.append('        faces\n')
-            lines.append('            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 0x00000000 internal/editor/textures/editor_fullclip\n')
-            lines.append('            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 0x00000000 internal/editor/textures/editor_fullclip\n')
-            lines.append('            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 0x00000000 internal/editor/textures/editor_fullclip\n')
-            lines.append('            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 0x00000000 internal/editor/textures/editor_fullclip\n')
-            lines.append('            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 0x00000000 internal/editor/textures/editor_fullclip\n')
-            lines.append('            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 0x00000000 internal/editor/textures/editor_fullclip\n')
+            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 1 2 3 0x00000000 {CLIP_MATERIAL}\n')
+            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 6 5 4 7 0x00000000 {CLIP_MATERIAL}\n')
+            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 2 1 5 6 0x00000000 {CLIP_MATERIAL}\n')
+            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 0 3 7 4 0x00000000 {CLIP_MATERIAL}\n')
+            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 3 2 6 7 0x00000000 {CLIP_MATERIAL}\n')
+            lines.append(f'            0.000000 0.000000 1.000000 1.000000 0.000000 1 0 4 5 0x00000000 {CLIP_MATERIAL}\n')
 
         f.writelines(lines)
