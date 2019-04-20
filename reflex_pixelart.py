@@ -13,7 +13,7 @@ import cv2
 import sys
 
 # input file path
-INPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\test images\\sarge28.png'
+INPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\test images\\rocket gang.png'
 
 # output file path
 OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\output.txt'
@@ -23,7 +23,7 @@ OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\
 APPEND = False
 
 # size per pixel in units
-PIXEL_SIZE = 1
+PIXEL_SIZE = 16
 
 # reflex material name
 MATERIAL = 'common/materials/effects/glow2'
@@ -51,10 +51,13 @@ CLIP_MATERIAL = 'internal/editor/textures/editor_fullclip'
 TRANSPARANT_COLORS = []
 
 # If the image has an alpha channel, pixels with an alpha value below this value will be ignored.
-ALPHA_THRESHOLD = 0
+ALPHA_THRESHOLD = 200
 
-# Rotate the image clockwise by this angle in degrees before converting it.
-ROTATE_ANGLE = 0
+# Rotate the image clockwise by this angle in degrees using opencv before converting it.
+IMAGE_ROTATE_ANGLE = 0
+
+# Scale the image using opencv before converting it.
+IMAGE_SCALE = 1
 
 # Flip the x and z axes
 FLIP_XZ = False
@@ -73,26 +76,11 @@ EFFECT_OFFSET_X = 1
 EFFECT_OFFSET_Y = 1
 # Effect angles same order as in game
 EFFECT_ANGLES = (0, 90, 0)
-# Number materials of the effect
+# Number of materials the effect has
 EFFECT_NUM_MATERIALS = 1
 
 if __name__ == '__main__':
-    image = cv2.imread(INPUT_FILE, cv2.IMREAD_UNCHANGED)
-    height = image.shape[0]
-    width = image.shape[1]
-    if image.shape[2] == 4:
-        has_alpha = True
-    else:
-        has_alpha = False
-    if ROTATE_ANGLE != 0:
-        M = cv2.getRotationMatrix2D((width/2, height/2), -ROTATE_ANGLE, 1)
-        image = cv2.warpAffine(image, M, (width, height))
     ox, oy, oz = ORIGIN
-    angle_x, angle_y, angle_z = EFFECT_ANGLES
-    if FLIP_XZ:
-        angle_x, angle_z = angle_z, angle_x
-    if FLIP_YZ:
-        angle_y, angle_z = angle_z, angle_y
     lines = []
     x_max = -sys.maxsize
     y_max = -sys.maxsize
@@ -100,6 +88,31 @@ if __name__ == '__main__':
     x_min = sys.maxsize
     y_min = sys.maxsize
     z_min = sys.maxsize
+
+    image = cv2.imread(INPUT_FILE, cv2.IMREAD_UNCHANGED)
+    # Check if image has alpha channel
+    if image.shape[2] == 4:
+        has_alpha = True
+    else:
+        has_alpha = False
+    # Scale image
+    if IMAGE_SCALE < 1:
+        image = cv2.resize(image, None, fx=IMAGE_SCALE, fy=IMAGE_SCALE, interpolation=cv2.INTER_AREA)
+    elif IMAGE_SCALE > 1:
+        image = cv2.resize(image, None, fx=IMAGE_SCALE, fy=IMAGE_SCALE, interpolation=cv2.INTER_CUBIC)
+    height = image.shape[0]
+    width = image.shape[1]
+    # Rotate image
+    if IMAGE_ROTATE_ANGLE != 0:
+        M = cv2.getRotationMatrix2D((width/2, height/2), -IMAGE_ROTATE_ANGLE, 1)
+        image = cv2.warpAffine(image, M, (width, height))
+    # Apply flips to effect angles
+    angle_x, angle_y, angle_z = EFFECT_ANGLES
+    if FLIP_XZ:
+        angle_x, angle_z = angle_z, angle_x
+    if FLIP_YZ:
+        angle_y, angle_z = angle_z, angle_y
+
     if APPEND:
         open_mode = 'a+'
     else:
