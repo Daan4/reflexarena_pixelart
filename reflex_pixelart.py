@@ -14,10 +14,10 @@ import numpy as np
 import sys
 
 # input file path
-INPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\test images\\rocket gang.png'
+INPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\test images\\Pogchamp.jpg'
 
 # worldspawn output file path
-WORLDSPAWN_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\empty.map'
+WORLDSPAWN_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\brushes.txt'
 # prefab output file path
 PREFAB_OUTPUT_FILE = 'D:\\Libraries\\Documents\\pycharmprojects\\reflexarena_pixelart\\prefabs.txt'
 
@@ -34,7 +34,7 @@ USE_PREFABS = True
 APPEND = False
 
 # size per pixel in units
-PIXEL_SIZE = 16
+PIXEL_SIZE = 4
 
 # reflex material name
 MATERIAL = 'common/materials/effects/glow2'
@@ -79,6 +79,7 @@ FLIP_YZ = False
 # Add an effect name here to use effects instead of brushes. Set to None to use brushes.
 # The effects use the same materials and colors that a brush would have.
 # Using an effect instead of brushes can reduce the file size and increase performance.
+# There is a (relatively low) limit to the number of effects though.
 # EFFECT_NAME = 'common/meshes/concrete/concrete_tile_128x128'
 EFFECT_NAME = None
 # Effect scale to use
@@ -122,7 +123,7 @@ def generate_effect_string(_x, y, z, ax, ay, az, name, _material, _color, scale,
     effect += f'        String64 effectName {name}\n'
     for i in range(num_materials):
         effect += f'        String256 material{i}Name {_material}\n'
-        effect += f'        ColourARGB32 material{i}Albedo {_color}\n'
+        effect += f'        ColourARGB32 material{i}Albedo {_color[2:]}\n'  #  strip the 0x prefix from effect material colors
     effect += f'        Float effectScale {scale}\n'
     return effect
 
@@ -170,7 +171,7 @@ if __name__ == '__main__':
         image = cv2.warpAffine(image, M, (width, height))
     # Create a list of unique RGB tuples that occur more than once
     if USE_PREFABS:
-        tmp = image[:,:,0:3]
+        tmp = image[:, :, 0:3]
         tmp = tmp.reshape(height*width, 3)
         unique, counts = np.unique(tmp, return_counts=True, axis=0)
         unique_indices = np.where(counts > 1)
@@ -256,10 +257,10 @@ if __name__ == '__main__':
                             prefab_lines.append('    entity\n')
                             prefab_lines.append('        type WorldSpawn\n')
                             prefab_lines.append(
-                                generate_brush_string(ox, ox+PIXEL_SIZE, oy-PIXEL_SIZE, oy, oz, oz+PIXEL_SIZE, color, material))
+                                generate_brush_string(0, PIXEL_SIZE, -PIXEL_SIZE, 0, 0, PIXEL_SIZE, color, material))
                         else:
                             prefab_lines.append(
-                                generate_effect_string(ox, oy, oz, angle_x, angle_y, angle_z, EFFECT_NAME,
+                                generate_effect_string(0, 0, 0, angle_x, angle_y, angle_z, EFFECT_NAME,
                                                        material, color, EFFECT_SCALE, EFFECT_NUM_MATERIALS))
                     if EFFECT_NAME is None:
                         effect_lines.append(
@@ -293,10 +294,9 @@ if __name__ == '__main__':
     # Write to files
     if APPEND:
         with open(WORLDSPAWN_OUTPUT_FILE, 'a+') as f:
-            f.write('\n')
             f.writelines(worldspawn_lines + effect_lines)
             f.seek(0)
-            lines = f.readlines()[1:]  # Cut off the first line which has the version number
+            lines = f.readlines()[1:]  # Cut off the first line which has the version number and the last newline
         with open(WORLDSPAWN_OUTPUT_FILE, 'w+') as f:
             f.write('reflex map version 8\n')
             f.writelines(prefab_lines)
